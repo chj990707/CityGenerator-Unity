@@ -160,11 +160,18 @@ public class CityGenerator : MonoBehaviour
         separator.name = "===========";
 
         //Make RoadPlane
+
+        RoadMeshGenerator roadMeshGenerator = new RoadMeshGenerator(roadGraph, mapSize);
+
         var roadPlane = new GameObject();
         roadPlane.name = "Road Plane";
         roadPlane.AddComponent<MeshFilter>();
         roadPlane.AddComponent<MeshRenderer>();
         roadPlane.GetComponent<MeshFilter>().mesh = MeshCreateService.GenerateRoadMesh(mapSize);
+        //roadPlane.GetComponent<MeshFilter>().mesh = roadMeshGenerator.GenerateMesh();
+        //roadPlane.AddComponent<MeshCollider>();
+        //roadPlane.GetComponent<MeshCollider>().sharedMesh = roadPlane.GetComponent<MeshFilter>().mesh;
+        //roadPlane.GetComponent<MeshCollider>().convex = true;
 
         Material roadMaterial = Resources.Load<Material>("Material/RoadMaterial");
         roadPlane.GetComponent<MeshRenderer>().material = roadMaterial;
@@ -176,6 +183,7 @@ public class CityGenerator : MonoBehaviour
         Material blockMaterial = Resources.Load<Material>("Material/BlockMaterial");
         Material parkMaterial = Resources.Load<Material>("Material/BlockGreenMaterial");
 
+        /*
         for (int i = 0; i < blockMeshes.Count; i++)
         {
             var block = new GameObject();
@@ -188,7 +196,8 @@ public class CityGenerator : MonoBehaviour
             if (blockMeshes[i].Block.IsPark) block.GetComponent<MeshRenderer>().material = parkMaterial;
             else block.GetComponent<MeshRenderer>().material = blockMaterial;
         }
-        
+        */
+
         //Make Lots
         var lotContainer = new GameObject();
         lotContainer.name = "Lot Container";
@@ -202,8 +211,11 @@ public class CityGenerator : MonoBehaviour
             lot.transform.parent = lotContainer.transform;
             lot.AddComponent<MeshFilter>();
             lot.AddComponent<MeshRenderer>();
+            lot.AddComponent<MeshCollider>();
             lot.GetComponent<MeshFilter>().mesh = MeshCreateService.GenerateBlockMesh(lotMeshes[i]);
-            
+            lot.GetComponent<MeshCollider>().sharedMesh = MeshCreateService.GenerateBlockMesh(lotMeshes[i]);
+            lot.GetComponent<MeshCollider>().convex = true;
+
             if (lotMeshes[i].Block.IsPark) lot.GetComponent<MeshRenderer>().material = parkMaterial;
             else lot.GetComponent<MeshRenderer>().material = lotMaterial;
         }

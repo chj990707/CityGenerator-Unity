@@ -73,6 +73,34 @@ namespace RoadGeneration
                 node2.AddEdge(edge2);
             }
         }
+        
+        public class Triangle
+        {
+            public HalfEdgedNode p1 { get; protected set; }
+            public HalfEdgedNode p2 { get; protected set; }
+            public HalfEdgedNode p3 { get; protected set; }
+
+            public Triangle(HalfEdgedNode a, HalfEdgedNode b, HalfEdgedNode c)
+            {
+                this.p1 = a;
+                this.p2 = b;
+                this.p3 = c;
+            }
+
+            internal bool isClockwise()
+            {
+                bool isClockWise = true;
+
+                float determinant = p1.X * p2.Y + p3.X * p1.Y + p2.X * p3.Y - p1.X * p3.Y - p3.X * p2.Y - p2.X * p1.Y;
+
+                if (determinant > 0f)
+                {
+                    isClockWise = false;
+                }
+
+                return isClockWise;
+            }
+        }
         public List<HalfEdgedNode> Nodes { get; private set; }
 
         public List<List<HalfEdgedNode>> polygons { get; private set; }
@@ -126,24 +154,127 @@ namespace RoadGeneration
             List<int> triangles = new List<int>();
             foreach(List<HalfEdgedNode> polygon in polygons)
             {
-                Vector3 vec0 = new Vector3(polygon[0].X, 0, polygon[0].Y);
-                Vector3 vec1 = new Vector3(polygon[1].X, 0, polygon[1].Y);
-                Vector3 vec2 = new Vector3(polygon[2].X, 0, polygon[2].Y);
-                Vector3 vec3 = new Vector3(polygon[3].X, 0, polygon[3].Y);
-                vertices.Add(vec0);
-                vertices.Add(vec1);
-                vertices.Add(vec2);
-                vertices.Add(vec3);
-                triangles.Add(vertices.IndexOf(vec0));
-                triangles.Add(vertices.IndexOf(vec1));
-                triangles.Add(vertices.IndexOf(vec3));
-                triangles.Add(vertices.IndexOf(vec1));
-                triangles.Add(vertices.IndexOf(vec2));
-                triangles.Add(vertices.IndexOf(vec3));
+                List<Triangle> tris = TriangulatePolygon(polygon);
+                foreach(Triangle tri in tris)
+                {
+                    Vector3 a = new Vector3(tri.p1.X, Mathf.PerlinNoise(tri.p1.X, tri.p1.Y) * 1, tri.p1.Y);
+                    Vector3 b = new Vector3(tri.p2.X, Mathf.PerlinNoise(tri.p2.X, tri.p2.Y) * 1, tri.p2.Y);
+                    Vector3 c = new Vector3(tri.p3.X, Mathf.PerlinNoise(tri.p3.X, tri.p3.Y) * 1, tri.p3.Y);
+
+                    vertices.Add(a);
+                    vertices.Add(b);
+                    vertices.Add(c);
+
+                    triangles.Add(vertices.IndexOf(a));
+                    triangles.Add(vertices.IndexOf(b));
+                    triangles.Add(vertices.IndexOf(c));
+                }
             }
             IMesh.vertices = vertices.ToArray();
             IMesh.triangles = triangles.ToArray();
             return IMesh;
+        }
+
+        public static List<Triangle> TriangulatePolygon(List<HalfEdgedNode> points)
+        {
+            //The list with triangles the method returns
+            List<Triangle> tris = new List<Triangle>();
+
+            //If we just have three points, then we dont have to do all calculations
+            if (points.Count == 3)
+            {
+                tris.Add(new Triangle(points[0], points[1], points[2]));
+
+                return tris;
+            }
+
+            while (true)
+            {
+                //This means we have just one triangle left
+                if (points.Count == 3)
+                {
+                    //The final triangle
+                    tris.Add(new Triangle(points[0], points[1], points[2]));
+                    break;
+                }
+                if (IsVertexEar(points, points[points.Count - 1], points[0], points[1]))
+                {
+                    tris.Add(new Triangle(points[points.Count - 1], points[0], points[1]));
+                    points.RemoveAt(0);
+                    continue;
+                }
+                if (IsVertexEar(points, points[points.Count - 2], points[points.Count - 1], points[0]))
+                {
+                    tris.Add(new Triangle(points[points.Count - 2], points[points.Count - 1], points[0]));
+                    points.RemoveAt(points.Count - 1);
+                    continue;
+                }
+                for (int i = 1; i < points.Count - 1; i++)
+                {
+                    if (IsVertexEar(points, points[i], points[i - 1], points[i + 1]))
+                    {
+                        tris.Add(new Triangle(points[i - 1], points[i], points[i + 1]));
+                        points.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
+
+            //Debug.Log(triangles.Count);
+
+            return tris;
+        }
+
+
+        //Check if a vertex is an ear
+        protected static bool IsVertexEar(List<HalfEdgedNode> polygon, HalfEdgedNode prev_v, HalfEdgedNode v, HalfEdgedNode next_v)
+        {
+            //A reflex vertex cant be an ear!
+            if (!new Triangle(prev_v, v, next_v).isClockwise())
+            {
+                return false;
+            }
+
+            //This triangle to check point in triangle
+            Vector2 a = new Vector2(prev_v.X, prev_v.Y);
+            Vector2 b = new Vector2(v.X, v.Y);
+            Vector2 c = new Vector2(next_v.X, next_v.Y);
+
+            bool hasPointInside = false;
+
+            for (int i = 0; i < polygon.Count; i++)
+            {
+                Vector2 p = new Vector2(polygon[i].X, polygon[i].Y);
+
+                //This means inside and not on the hull
+                if (IsPointInTriangle(a, b, c, p))
+                {
+                    hasPointInside = true;
+
+                    break;
+                }
+            }
+            return !hasPointInside;
+        }
+
+        protected static bool IsPointInTriangle(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p)
+        {
+            bool isWithinTriangle = false;
+
+            //Based on Barycentric coordinates
+            float denominator = ((p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y));
+
+            float a = ((p2.y - p3.y) * (p.x - p3.x) + (p3.x - p2.x) * (p.y - p3.y)) / denominator;
+            float b = ((p3.y - p1.y) * (p.x - p3.x) + (p1.x - p3.x) * (p.y - p3.y)) / denominator;
+            float c = 1 - a - b;
+
+            //The point is within the triangle
+            if (a > 0f && a < 1f && b > 0f && b < 1f && c > 0f && c < 1f)
+            {
+                isWithinTriangle = true;
+            }
+
+            return isWithinTriangle;
         }
 
         protected bool FindHole(HalfEdgedNode startNode)
