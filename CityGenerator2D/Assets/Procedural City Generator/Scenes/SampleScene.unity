@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 873131863}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657826, g: 0.49641263, b: 0.57481676, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -344,11 +344,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c67321ef99586cd4c8e1ce7185a8383c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapSize: 300
+  mapSize: 100
   seed: 13
   maxDegreeInCurves: 10
   branchingProbability: 0.075
-  crossingDeletionProbability: 0.1
+  crossingDeletionProbability: 0.02
   maxMajorRoad: 3000
   maxMinorRoad: 10000
   majorThickness: 2.5
@@ -357,9 +357,9 @@ MonoBehaviour:
   minBuildHeight: 2
   maxBuildHeight: 15
   drawRoadNodes: 0
-  drawRoads: 1
-  drawBlockNodes: 0
-  drawBlocks: 1
+  drawRoads: 0
+  drawBlockNodes: 1
+  drawBlocks: 0
   drawThinnedBlocks: 0
   drawConvexBlocks: 0
   drawConcaveBlocks: 0
