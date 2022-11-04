@@ -32,7 +32,7 @@ namespace Services
         {
             Mesh lMesh = new Mesh();
 
-            int numTriangles = block.Triangles.Count + block.SideTriangles.Count;
+            int numTriangles = block.Triangles.Count * 2 + block.SideTriangles.Count;
 
             var vertices = new Vector3[numTriangles * 3];  //Not the most optimized way, because same vertex can be stored more than once
             var triangles = new int[numTriangles * 3];
@@ -55,12 +55,30 @@ namespace Services
                 triangles[3 * i + 2] = 3 * i + 2;
             }
 
-            //Add side panels
-            for (int i = block.Triangles.Count; i < numTriangles; i++)
+            //Add bottom panels
+            for (int i = block.Triangles.Count; i < block.Triangles.Count * 2; i++)
             {
-                vertices[3 * i] = block.SideTriangles[i - block.Triangles.Count].A;
-                vertices[3 * i + 1] = block.SideTriangles[i - block.Triangles.Count].B;
-                vertices[3 * i + 2] = block.SideTriangles[i - block.Triangles.Count].C;
+                //Change the Vectors (Y will be up vector)
+                Vector3 A = new Vector3(block.Triangles[i - block.Triangles.Count].A.x, 0, block.Triangles[i - block.Triangles.Count].A.y);
+                Vector3 B = new Vector3(block.Triangles[i - block.Triangles.Count].B.x, 0, block.Triangles[i - block.Triangles.Count].B.y);
+                Vector3 C = new Vector3(block.Triangles[i - block.Triangles.Count].C.x, 0, block.Triangles[i - block.Triangles.Count].C.y);
+
+                //Add attributes to Mesh
+                vertices[3 * i] = A;
+                vertices[3 * i + 1] = C;
+                vertices[3 * i + 2] = B;
+
+                triangles[3 * i] = 3 * i;
+                triangles[3 * i + 1] = 3 * i + 1;
+                triangles[3 * i + 2] = 3 * i + 2;
+            }
+
+            //Add side panels
+            for (int i = block.Triangles.Count * 2; i < numTriangles; i++)
+            {
+                vertices[3 * i] = block.SideTriangles[i - block.Triangles.Count * 2].A;
+                vertices[3 * i + 1] = block.SideTriangles[i - block.Triangles.Count * 2].B;
+                vertices[3 * i + 2] = block.SideTriangles[i - block.Triangles.Count * 2].C;
 
                 triangles[3 * i] = 3 * i;
                 triangles[3 * i + 1] = 3 * i + 1;
