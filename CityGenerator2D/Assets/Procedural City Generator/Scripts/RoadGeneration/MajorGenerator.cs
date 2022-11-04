@@ -23,7 +23,7 @@ namespace RoadGeneration
 
         private readonly Graph graph;
         
-        private const int RoadLength = 10;
+        private const int RoadLength = 20;
         
         public MajorGenerator(
             System.Random seededRandom, 

@@ -113,7 +113,7 @@ namespace BlockDivision
             var boundingRectangle = BoundingService.GetMinBoundingRectangle(block);
             
             //Check if the size is not too small
-            if (boundingRectangle.GetArea() < 10f) return false;
+            if (boundingRectangle.GetArea() < 50f) return false;
 
             //Check if the aspect ratio is not too big
             if (boundingRectangle.GetAspectRatio() > 4f) return false;
